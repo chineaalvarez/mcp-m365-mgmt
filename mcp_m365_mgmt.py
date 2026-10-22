@@ -207,6 +207,109 @@ def list_intune_configuration_policies():
         return {"error": response.text, "status_code": response.status_code}
 
 @mcp.tool()
+def list_settings_catalog_policies():
+    """Lists all Intune Settings Catalog policies (configurationPolicies)."""
+    access_token = get_access_token()
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.get(
+        "https://graph.microsoft.com/beta/deviceManagement/configurationPolicies",
+        headers=headers
+    )
+
+    if response.status_code == 200:
+        result = response.json()
+        policies = []
+
+        for policy in result.get("value", []):
+            policies.append({
+                "id": policy.get("id"),
+                "name": policy.get("name"),
+                "description": policy.get("description"),
+                "platforms": policy.get("platforms"),
+                "technologies": policy.get("technologies"),
+                "settingCount": policy.get("settingCount"),
+                "createdDateTime": policy.get("createdDateTime"),
+                "lastModifiedDateTime": policy.get("lastModifiedDateTime")
+            })
+
+        return {"settings_catalog_policies": policies, "count": len(policies)}
+    else:
+        return {"error": response.text, "status_code": response.status_code}
+
+@mcp.tool()
+def get_settings_catalog_policy_settings(policy_id: str):
+    """Gets the configured settings and values for a specific Intune Settings Catalog policy."""
+    access_token = get_access_token()
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.get(
+        f"https://graph.microsoft.com/beta/deviceManagement/configurationPolicies/{policy_id}/settings?$expand=settingDefinitions",
+        headers=headers
+    )
+
+    if response.status_code == 200:
+        result = response.json()
+        settings = []
+
+        for item in result.get("value", []):
+            instance = item.get("settingInstance", {})
+            settings.append({
+                "settingInstanceId": item.get("id"),
+                "settingDefinitionId": instance.get("settingDefinitionId"),
+                "settingInstanceTemplateReference": instance.get("settingInstanceTemplateReference"),
+                "settingInstance": instance
+            })
+
+        return {"policy_id": policy_id, "settings": settings, "count": len(settings)}
+    else:
+        return {"error": response.text, "status_code": response.status_code}
+
+@mcp.tool()
+def get_settings_catalog_policy_assignments(policy_id: str):
+    """Gets the group/device assignments for a specific Intune Settings Catalog policy."""
+    access_token = get_access_token()
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.get(
+        f"https://graph.microsoft.com/beta/deviceManagement/configurationPolicies/{policy_id}/assignments",
+        headers=headers
+    )
+
+    if response.status_code == 200:
+        result = response.json()
+        assignments = []
+
+        for assignment in result.get("value", []):
+            target = assignment.get("target", {})
+            target_type = target.get("@odata.type", "").split('.')[-1]
+            assignments.append({
+                "id": assignment.get("id"),
+                "source": assignment.get("source"),
+                "targetType": target_type,
+                "isExclusion": "exclusion" in target_type.lower(),
+                "groupId": target.get("groupId"),
+                "deviceAndAppManagementAssignmentFilterId": target.get("deviceAndAppManagementAssignmentFilterId"),
+                "deviceAndAppManagementAssignmentFilterType": target.get("deviceAndAppManagementAssignmentFilterType")
+            })
+
+        return {"policy_id": policy_id, "assignments": assignments, "count": len(assignments)}
+    else:
+        return {"error": response.text, "status_code": response.status_code}
+
+@mcp.tool()
 def list_intune_filters():
     """Lists all Intune assignment filters."""
     access_token = get_access_token()

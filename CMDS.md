@@ -1,6 +1,6 @@
 # MCP M365 Management - Available Commands
 
-Complete reference of all 32 tools available in the MCP server.
+Complete reference of all 35 tools available in the MCP server.
 
 ---
 
@@ -16,12 +16,15 @@ from mcp_m365_mgmt import get_group_members
 from mcp_m365_mgmt import search_users
 ```
 
-### 📱 Intune Device Management (6 tools)
+### 📱 Intune Device Management (9 tools)
 
 ```python
 from mcp_m365_mgmt import list_intune_devices
 from mcp_m365_mgmt import list_intune_compliance_policies
 from mcp_m365_mgmt import list_intune_configuration_policies
+from mcp_m365_mgmt import list_settings_catalog_policies
+from mcp_m365_mgmt import get_settings_catalog_policy_settings
+from mcp_m365_mgmt import get_settings_catalog_policy_assignments
 from mcp_m365_mgmt import list_intune_filters
 from mcp_m365_mgmt import list_intune_scripts
 from mcp_m365_mgmt import list_intune_applications
@@ -115,6 +118,24 @@ python -c "from mcp_m365_mgmt import list_intune_compliance_policies; import jso
 
 ```bash
 python -c "from mcp_m365_mgmt import list_intune_configuration_policies; import json; result = list_intune_configuration_policies(); print(json.dumps(result, indent=2)[:500])"
+```
+
+**Test Settings Catalog Policies:**
+
+```bash
+python -c "from mcp_m365_mgmt import list_settings_catalog_policies; import json; result = list_settings_catalog_policies(); print(json.dumps(result, indent=2)[:500])"
+```
+
+**Test Settings Catalog Policy Settings:**
+
+```bash
+python -c "from mcp_m365_mgmt import get_settings_catalog_policy_settings; import json; result = get_settings_catalog_policy_settings('<policy-id>'); print(json.dumps(result, indent=2)[:500])"
+```
+
+**Test Settings Catalog Policy Assignments:**
+
+```bash
+python -c "from mcp_m365_mgmt import get_settings_catalog_policy_assignments; import json; result = get_settings_catalog_policy_assignments('<policy-id>'); print(json.dumps(result, indent=2)[:500])"
 ```
 
 **Test Intune Filters:**
