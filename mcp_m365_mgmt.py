@@ -310,6 +310,68 @@ def get_settings_catalog_policy_assignments(policy_id: str):
         return {"error": response.text, "status_code": response.status_code}
 
 @mcp.tool()
+def list_settings_catalog_policies_full():
+    """Lists all Intune Settings Catalog policies with their settings and assignments in one call (uses $expand to avoid per-policy lookups)."""
+    access_token = get_access_token()
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    url = "https://graph.microsoft.com/beta/deviceManagement/configurationPolicies?$expand=settings,assignments"
+    policies = []
+
+    while url:
+        response = requests.get(url, headers=headers)
+
+        if response.status_code != 200:
+            return {"error": response.text, "status_code": response.status_code}
+
+        result = response.json()
+
+        for policy in result.get("value", []):
+            assignments = []
+            for assignment in policy.get("assignments", []):
+                target = assignment.get("target", {})
+                target_type = target.get("@odata.type", "").split('.')[-1]
+                assignments.append({
+                    "id": assignment.get("id"),
+                    "source": assignment.get("source"),
+                    "targetType": target_type,
+                    "isExclusion": "exclusion" in target_type.lower(),
+                    "groupId": target.get("groupId"),
+                    "deviceAndAppManagementAssignmentFilterId": target.get("deviceAndAppManagementAssignmentFilterId"),
+                    "deviceAndAppManagementAssignmentFilterType": target.get("deviceAndAppManagementAssignmentFilterType")
+                })
+
+            settings = []
+            for item in policy.get("settings", []):
+                instance = item.get("settingInstance", {})
+                settings.append({
+                    "settingInstanceId": item.get("id"),
+                    "settingDefinitionId": instance.get("settingDefinitionId"),
+                    "settingInstance": instance
+                })
+
+            policies.append({
+                "id": policy.get("id"),
+                "name": policy.get("name"),
+                "description": policy.get("description"),
+                "platforms": policy.get("platforms"),
+                "technologies": policy.get("technologies"),
+                "settingCount": policy.get("settingCount"),
+                "createdDateTime": policy.get("createdDateTime"),
+                "lastModifiedDateTime": policy.get("lastModifiedDateTime"),
+                "settings": settings,
+                "assignments": assignments
+            })
+
+        url = result.get("@odata.nextLink")
+
+    return {"settings_catalog_policies": policies, "count": len(policies)}
+
+@mcp.tool()
 def list_intune_filters():
     """Lists all Intune assignment filters."""
     access_token = get_access_token()
