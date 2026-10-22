@@ -120,7 +120,7 @@ From your app registration **Overview** page, copy:
 - **Directory (tenant) ID** → `AZURE_TENANT_ID`
 - Client secret (from step 2) → `AZURE_CLIENT_SECRET`
 
-## 📋 Complete Tool List (32 Tools)
+## 📋 Complete Tool List (36 Tools)
 
 ### 👥 User & Group Management (4 tools)
 
@@ -130,11 +130,15 @@ From your app registration **Overview** page, copy:
 - `list_groups` - List all groups
 - `get_group_members` - Get group membership
 
-### 📱 Intune Device Management (6 tools)
+### 📱 Intune Device Management (10 tools)
 
 - `list_intune_devices` - List managed devices
 - `list_intune_compliance_policies` - List compliance policies
 - `list_intune_configuration_policies` - List configuration policies
+- `list_settings_catalog_policies` - List Settings Catalog policies
+- `get_settings_catalog_policy_settings` - Get a Settings Catalog policy's configured settings/values
+- `get_settings_catalog_policy_assignments` - Get a Settings Catalog policy's group/device assignments
+- `list_settings_catalog_policies_full` - List all Settings Catalog policies with settings and assignments embedded in one call
 - `list_intune_filters` - List assignment filters
 - `list_intune_scripts` - List PowerShell and Shell scripts
 - `list_intune_applications` - List mobile applications

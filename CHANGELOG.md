@@ -2,6 +2,15 @@
 
 All notable changes to the MCP Entra Server project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- `list_settings_catalog_policies` - List all Intune Settings Catalog policies (`deviceManagement/configurationPolicies`)
+- `get_settings_catalog_policy_settings` - Get the configured settings and values for a specific Settings Catalog policy
+- `get_settings_catalog_policy_assignments` - Get the group/device assignments for a specific Settings Catalog policy
+- `list_settings_catalog_policies_full` - List all Settings Catalog policies with settings and assignments embedded via `$expand`, avoiding per-policy lookups
+
 ## [1.0.2] - 2025-11-04
 
 ### Added
