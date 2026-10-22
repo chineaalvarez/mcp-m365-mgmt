@@ -1,6 +1,6 @@
 # MCP Entra Server - Complete Tool List
 
-## 🎉 Total Tools: 36
+## 🎉 Total Tools: 45
 
 ### 👥 **User & Group Management** (5 tools)
 
@@ -23,53 +23,65 @@
 14. `list_intune_scripts` - List all PowerShell and Shell scripts
 15. `list_intune_applications` - List all mobile applications
 
+### 🎯 **Policy & App Assignment Management** (9 tools)
+
+16. `create_compliance_policy_assignment` - Assign a device compliance policy to a group, all devices, or all users
+17. `create_configuration_policy_assignment` - Assign a legacy device configuration profile to a group, all devices, or all users
+18. `create_settings_catalog_policy_assignment` - Assign a Settings Catalog policy to a group, all devices, or all users
+19. `create_script_assignment` - Assign a PowerShell or Shell script to a group, all devices, or all users
+20. `create_app_assignment` - Assign a mobile app to a group, all devices, or all users, with an install intent
+21. `create_autopilot_profile_assignment` - Assign a Windows Autopilot deployment profile to a group, all devices, or all users (replaces any existing assignment)
+22. `create_enrollment_status_page_assignment` - Assign an Enrollment Status Page (ESP) profile to a group, all devices, or all users
+23. `create_app_protection_policy_assignment` - Assign an app protection (MAM) policy to a group
+24. `delete_intune_policy` - Permanently delete an Intune policy, profile, script, or app
+
 ### 🚗 **Windows Autopilot** (3 tools)
 
-16. `list_autopilot_profiles` - List all Windows Autopilot deployment profiles
-17. `list_autopilot_devices` - List all registered Autopilot devices
-18. `list_enrollment_status_page_profiles` - List all ESP (Enrollment Status Page) profiles
+25. `list_autopilot_profiles` - List all Windows Autopilot deployment profiles
+26. `list_autopilot_devices` - List all registered Autopilot devices
+27. `list_enrollment_status_page_profiles` - List all ESP (Enrollment Status Page) profiles
 
 ### 📱 **Mobile Device Management** (3 tools)
 
-19. `list_android_management_profiles` - List all Android policies, settings, and enrollment configurations
-20. `list_ios_management_profiles` - List all iOS/iPadOS policies, settings, and enrollment configurations
-21. `list_app_protection_policies` - List all app protection policies (MAM) for iOS, Android, and Windows
+28. `list_android_management_profiles` - List all Android policies, settings, and enrollment configurations
+29. `list_ios_management_profiles` - List all iOS/iPadOS policies, settings, and enrollment configurations
+30. `list_app_protection_policies` - List all app protection policies (MAM) for iOS, Android, and Windows
 
 ### 🌐 **Infrastructure & Connectivity** (4 tools)
 
-22. `list_microsoft_tunnel_sites` - List all Microsoft Tunnel Gateway sites
-23. `list_microsoft_tunnel_servers` - List all Microsoft Tunnel servers and health status
-24. `list_intune_ad_connectors` - List all Intune Connectors for Active Directory (Hybrid Join)
-25. `list_intune_certificate_connectors` - List all Intune Certificate Connectors (NDES)
+31. `list_microsoft_tunnel_sites` - List all Microsoft Tunnel Gateway sites
+32. `list_microsoft_tunnel_servers` - List all Microsoft Tunnel servers and health status
+33. `list_intune_ad_connectors` - List all Intune Connectors for Active Directory (Hybrid Join)
+34. `list_intune_certificate_connectors` - List all Intune Certificate Connectors (NDES)
 
 ### 📄 **File Management - Basic** (3 tools)
 
-26. `create_file_in_onedrive` - Create text files in user's OneDrive
-27. `create_file_in_sharepoint` - Create text files in SharePoint sites
-28. `list_sharepoint_sites` - List all SharePoint sites in the tenant
+35. `create_file_in_onedrive` - Create text files in user's OneDrive
+36. `create_file_in_sharepoint` - Create text files in SharePoint sites
+37. `list_sharepoint_sites` - List all SharePoint sites in the tenant
 
 ### 📊 **Office Documents - Microsoft Formats** (3 tools)
 
-29. `create_word_document` - Create Word documents (.docx)
-30. `create_excel_workbook` - Create Excel workbooks (.xlsx)
-31. `create_powerpoint_presentation` - Create PowerPoint presentations (.pptx)
+38. `create_word_document` - Create Word documents (.docx)
+39. `create_excel_workbook` - Create Excel workbooks (.xlsx)
+40. `create_powerpoint_presentation` - Create PowerPoint presentations (.pptx)
 
 ### 🔄 **File Conversion** (1 tool)
 
-32. `convert_file_to_pdf` - Convert Office files (Word, Excel, PowerPoint) to PDF
+41. `convert_file_to_pdf` - Convert Office files (Word, Excel, PowerPoint) to PDF
 
 ### 📋 **CSV Support** (2 tools)
 
-33. `create_csv_file` - Create CSV files for data exchange
-34. `read_csv_file` - Read CSV files and return data as structured lists
+42. `create_csv_file` - Create CSV files for data exchange
+43. `read_csv_file` - Read CSV files and return data as structured lists
 
 ### 🖼️ **Image Export** (1 tool)
 
-35. `export_powerpoint_slide_as_image` - Export PowerPoint slides as PNG, JPG, GIF, BMP, or TIFF
+44. `export_powerpoint_slide_as_image` - Export PowerPoint slides as PNG, JPG, GIF, BMP, or TIFF
 
 ### 🌍 **OpenDocument Format (ODF)** (1 tool)
 
-36. `create_odf_document` - Create ODF files (.odt, .ods, .odp) for cross-platform compatibility
+45. `create_odf_document` - Create ODF files (.odt, .ods, .odp) for cross-platform compatibility
 
 ---
 

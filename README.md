@@ -120,7 +120,7 @@ From your app registration **Overview** page, copy:
 - **Directory (tenant) ID** → `AZURE_TENANT_ID`
 - Client secret (from step 2) → `AZURE_CLIENT_SECRET`
 
-## 📋 Complete Tool List (36 Tools)
+## 📋 Complete Tool List (45 Tools)
 
 ### 👥 User & Group Management (4 tools)
 
@@ -142,6 +142,18 @@ From your app registration **Overview** page, copy:
 - `list_intune_filters` - List assignment filters
 - `list_intune_scripts` - List PowerShell and Shell scripts
 - `list_intune_applications` - List mobile applications
+
+### 🎯 Policy & App Assignment Management (9 tools)
+
+- `create_compliance_policy_assignment` - Assign a compliance policy to a group, all devices, or all users
+- `create_configuration_policy_assignment` - Assign a legacy configuration profile to a group, all devices, or all users
+- `create_settings_catalog_policy_assignment` - Assign a Settings Catalog policy to a group, all devices, or all users
+- `create_script_assignment` - Assign a PowerShell or Shell script to a group, all devices, or all users
+- `create_app_assignment` - Assign a mobile app to a group, all devices, or all users
+- `create_autopilot_profile_assignment` - Assign an Autopilot deployment profile (replaces existing assignment)
+- `create_enrollment_status_page_assignment` - Assign an ESP profile to a group, all devices, or all users
+- `create_app_protection_policy_assignment` - Assign an app protection (MAM) policy to a group
+- `delete_intune_policy` - Permanently delete an Intune policy, profile, script, or app
 
 ### 🚗 Windows Autopilot (3 tools)
 

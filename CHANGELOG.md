@@ -10,6 +10,8 @@ All notable changes to the MCP Entra Server project will be documented in this f
 - `get_settings_catalog_policy_settings` - Get the configured settings and values for a specific Settings Catalog policy
 - `get_settings_catalog_policy_assignments` - Get the group/device assignments for a specific Settings Catalog policy
 - `list_settings_catalog_policies_full` - List all Settings Catalog policies with settings and assignments embedded via `$expand`, avoiding per-policy lookups
+- `create_compliance_policy_assignment`, `create_configuration_policy_assignment`, `create_settings_catalog_policy_assignment`, `create_script_assignment`, `create_app_assignment`, `create_autopilot_profile_assignment`, `create_enrollment_status_page_assignment`, `create_app_protection_policy_assignment` - Create assignments (to a group, all devices, or all licensed users) across every assignable Intune policy, profile, script, and app type. Each reads existing assignments first and merges in the new target so existing assignments are preserved, except the Autopilot tool, which replaces the profile's single direct assignment (the only mode the Graph API supports for that resource)
+- `delete_intune_policy` - Permanently delete a policy, profile, script, or app of any of the above types
 
 ## [1.0.2] - 2025-11-04
 
