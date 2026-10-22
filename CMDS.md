@@ -1,6 +1,6 @@
 # MCP M365 Management - Available Commands
 
-Complete reference of all 36 tools available in the MCP server.
+Complete reference of all 45 tools available in the MCP server.
 
 ---
 
@@ -29,6 +29,20 @@ from mcp_m365_mgmt import list_settings_catalog_policies_full
 from mcp_m365_mgmt import list_intune_filters
 from mcp_m365_mgmt import list_intune_scripts
 from mcp_m365_mgmt import list_intune_applications
+```
+
+### 🎯 Policy & App Assignment Management (9 tools)
+
+```python
+from mcp_m365_mgmt import create_compliance_policy_assignment
+from mcp_m365_mgmt import create_configuration_policy_assignment
+from mcp_m365_mgmt import create_settings_catalog_policy_assignment
+from mcp_m365_mgmt import create_script_assignment
+from mcp_m365_mgmt import create_app_assignment
+from mcp_m365_mgmt import create_autopilot_profile_assignment
+from mcp_m365_mgmt import create_enrollment_status_page_assignment
+from mcp_m365_mgmt import create_app_protection_policy_assignment
+from mcp_m365_mgmt import delete_intune_policy
 ```
 
 ### 🖥️ Windows Autopilot (3 tools)

@@ -52,6 +52,24 @@ def get_credential():
 
 credential = get_credential()
 
+def build_assignment_target(group_id=None, is_exclusion=False, all_devices=False, all_users=False, filter_id=None, filter_type="none"):
+    """Builds a Microsoft Graph assignment target object from simple parameters."""
+    if group_id:
+        odata_type = "#microsoft.graph.exclusionGroupAssignmentTarget" if is_exclusion else "#microsoft.graph.groupAssignmentTarget"
+        target = {"@odata.type": odata_type, "groupId": group_id}
+    elif all_devices:
+        target = {"@odata.type": "#microsoft.graph.allDevicesAssignmentTarget"}
+    elif all_users:
+        target = {"@odata.type": "#microsoft.graph.allLicensedUsersAssignmentTarget"}
+    else:
+        raise ValueError("Specify group_id, all_devices=True, or all_users=True")
+
+    if filter_id:
+        target["deviceAndAppManagementAssignmentFilterId"] = filter_id
+        target["deviceAndAppManagementAssignmentFilterType"] = filter_type
+
+    return target
+
 def get_access_token():
     """Get access token for Microsoft Graph API."""
     auth_mode = os.getenv("AUTH_MODE", "app")
@@ -845,6 +863,302 @@ def list_app_protection_policies():
             })
         
         return {"app_protection_policies": policies, "count": len(policies)}
+    else:
+        return {"error": response.text, "status_code": response.status_code}
+
+@mcp.tool()
+def create_compliance_policy_assignment(policy_id: str, group_id: str = None, all_devices: bool = False, all_users: bool = False, is_exclusion: bool = False, filter_id: str = None, filter_type: str = "none"):
+    """Assigns an Intune device compliance policy to a group, all devices, or all licensed users. Adds to existing assignments without removing them."""
+    access_token = get_access_token()
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    base_url = f"https://graph.microsoft.com/v1.0/deviceManagement/deviceCompliancePolicies/{policy_id}"
+
+    existing = requests.get(f"{base_url}/assignments", headers=headers)
+    if existing.status_code != 200:
+        return {"error": existing.text, "status_code": existing.status_code}
+
+    try:
+        new_target = build_assignment_target(group_id, is_exclusion, all_devices, all_users, filter_id, filter_type)
+    except ValueError as e:
+        return {"error": str(e)}
+
+    assignments = [{"target": a["target"]} for a in existing.json().get("value", [])]
+    assignments.append({"target": new_target})
+
+    response = requests.post(f"{base_url}/assign", headers=headers, json={"assignments": assignments})
+
+    if response.status_code in (200, 204):
+        return {"policy_id": policy_id, "status": "assigned", "target": new_target, "total_assignments": len(assignments)}
+    else:
+        return {"error": response.text, "status_code": response.status_code}
+
+@mcp.tool()
+def create_configuration_policy_assignment(config_id: str, group_id: str = None, all_devices: bool = False, all_users: bool = False, is_exclusion: bool = False, filter_id: str = None, filter_type: str = "none"):
+    """Assigns an Intune device configuration profile (legacy deviceConfigurations) to a group, all devices, or all licensed users. Adds to existing assignments without removing them."""
+    access_token = get_access_token()
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    base_url = f"https://graph.microsoft.com/beta/deviceManagement/deviceConfigurations/{config_id}"
+
+    existing = requests.get(f"{base_url}/assignments", headers=headers)
+    if existing.status_code != 200:
+        return {"error": existing.text, "status_code": existing.status_code}
+
+    try:
+        new_target = build_assignment_target(group_id, is_exclusion, all_devices, all_users, filter_id, filter_type)
+    except ValueError as e:
+        return {"error": str(e)}
+
+    assignments = [{"target": a["target"]} for a in existing.json().get("value", [])]
+    assignments.append({"target": new_target})
+
+    response = requests.post(f"{base_url}/assign", headers=headers, json={"assignments": assignments})
+
+    if response.status_code in (200, 204):
+        return {"config_id": config_id, "status": "assigned", "target": new_target, "total_assignments": len(assignments)}
+    else:
+        return {"error": response.text, "status_code": response.status_code}
+
+@mcp.tool()
+def create_settings_catalog_policy_assignment(policy_id: str, group_id: str = None, all_devices: bool = False, all_users: bool = False, is_exclusion: bool = False, filter_id: str = None, filter_type: str = "none"):
+    """Assigns an Intune Settings Catalog policy to a group, all devices, or all licensed users. Adds to existing assignments without removing them."""
+    access_token = get_access_token()
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    base_url = f"https://graph.microsoft.com/beta/deviceManagement/configurationPolicies/{policy_id}"
+
+    existing = requests.get(f"{base_url}/assignments", headers=headers)
+    if existing.status_code != 200:
+        return {"error": existing.text, "status_code": existing.status_code}
+
+    try:
+        new_target = build_assignment_target(group_id, is_exclusion, all_devices, all_users, filter_id, filter_type)
+    except ValueError as e:
+        return {"error": str(e)}
+
+    assignments = [{"target": a["target"]} for a in existing.json().get("value", [])]
+    assignments.append({"target": new_target})
+
+    response = requests.post(f"{base_url}/assign", headers=headers, json={"assignments": assignments})
+
+    if response.status_code in (200, 204):
+        return {"policy_id": policy_id, "status": "assigned", "target": new_target, "total_assignments": len(assignments)}
+    else:
+        return {"error": response.text, "status_code": response.status_code}
+
+@mcp.tool()
+def create_script_assignment(script_id: str, script_type: str = "powershell", group_id: str = None, all_devices: bool = False, all_users: bool = False, is_exclusion: bool = False, filter_id: str = None, filter_type: str = "none"):
+    """Assigns an Intune PowerShell or Shell script to a group, all devices, or all licensed users. script_type is 'powershell' or 'shell'. Adds to existing assignments without removing them."""
+    access_token = get_access_token()
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    resource = "deviceManagementScripts" if script_type == "powershell" else "deviceShellScripts"
+    base_url = f"https://graph.microsoft.com/beta/deviceManagement/{resource}/{script_id}"
+
+    existing = requests.get(f"{base_url}/assignments", headers=headers)
+    if existing.status_code != 200:
+        return {"error": existing.text, "status_code": existing.status_code}
+
+    try:
+        new_target = build_assignment_target(group_id, is_exclusion, all_devices, all_users, filter_id, filter_type)
+    except ValueError as e:
+        return {"error": str(e)}
+
+    assignments = [{"target": a["target"]} for a in existing.json().get("value", [])]
+    assignments.append({"target": new_target})
+
+    response = requests.post(f"{base_url}/assign", headers=headers, json={"deviceManagementScriptAssignments": assignments})
+
+    if response.status_code in (200, 204):
+        return {"script_id": script_id, "script_type": script_type, "status": "assigned", "target": new_target, "total_assignments": len(assignments)}
+    else:
+        return {"error": response.text, "status_code": response.status_code}
+
+@mcp.tool()
+def create_app_assignment(app_id: str, group_id: str = None, all_devices: bool = False, all_users: bool = False, is_exclusion: bool = False, filter_id: str = None, filter_type: str = "none", intent: str = "required"):
+    """Assigns an Intune mobile app to a group, all devices, or all licensed users. intent is 'required', 'available', 'uninstall', or 'availableWithoutEnrollment'. Adds to existing assignments without removing them."""
+    access_token = get_access_token()
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    base_url = f"https://graph.microsoft.com/beta/deviceAppManagement/mobileApps/{app_id}"
+
+    existing = requests.get(f"{base_url}/assignments", headers=headers)
+    if existing.status_code != 200:
+        return {"error": existing.text, "status_code": existing.status_code}
+
+    try:
+        new_target = build_assignment_target(group_id, is_exclusion, all_devices, all_users, filter_id, filter_type)
+    except ValueError as e:
+        return {"error": str(e)}
+
+    assignments = [{"target": a["target"], "intent": a.get("intent", "required")} for a in existing.json().get("value", [])]
+    assignments.append({"target": new_target, "intent": intent})
+
+    response = requests.post(f"{base_url}/assign", headers=headers, json={"mobileAppAssignments": assignments})
+
+    if response.status_code in (200, 204):
+        return {"app_id": app_id, "status": "assigned", "target": new_target, "intent": intent, "total_assignments": len(assignments)}
+    else:
+        return {"error": response.text, "status_code": response.status_code}
+
+@mcp.tool()
+def create_autopilot_profile_assignment(profile_id: str, group_id: str = None, all_devices: bool = False, all_users: bool = False):
+    """Assigns a Windows Autopilot deployment profile to a group, all devices, or all licensed users. WARNING: this REPLACES the profile's current assignment entirely (Autopilot profiles support only one direct assignment target)."""
+    access_token = get_access_token()
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    try:
+        new_target = build_assignment_target(group_id, False, all_devices, all_users)
+    except ValueError as e:
+        return {"error": str(e)}
+
+    response = requests.post(
+        f"https://graph.microsoft.com/beta/deviceManagement/windowsAutopilotDeploymentProfiles/{profile_id}/assign",
+        headers=headers,
+        json={"target": new_target}
+    )
+
+    if response.status_code in (200, 204):
+        return {"profile_id": profile_id, "status": "assigned", "target": new_target, "note": "This replaced any previous assignment on the profile."}
+    else:
+        return {"error": response.text, "status_code": response.status_code}
+
+@mcp.tool()
+def create_enrollment_status_page_assignment(config_id: str, group_id: str = None, all_devices: bool = False, all_users: bool = False, is_exclusion: bool = False, filter_id: str = None, filter_type: str = "none"):
+    """Assigns an Enrollment Status Page (ESP) profile to a group, all devices, or all licensed users. Adds to existing assignments without removing them."""
+    access_token = get_access_token()
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    base_url = f"https://graph.microsoft.com/beta/deviceManagement/deviceEnrollmentConfigurations/{config_id}"
+
+    existing = requests.get(f"{base_url}/assignments", headers=headers)
+    if existing.status_code != 200:
+        return {"error": existing.text, "status_code": existing.status_code}
+
+    try:
+        new_target = build_assignment_target(group_id, is_exclusion, all_devices, all_users, filter_id, filter_type)
+    except ValueError as e:
+        return {"error": str(e)}
+
+    assignments = [{"target": a["target"]} for a in existing.json().get("value", [])]
+    assignments.append({"target": new_target})
+
+    response = requests.post(f"{base_url}/assign", headers=headers, json={"enrollmentConfigurationAssignments": assignments})
+
+    if response.status_code in (200, 204):
+        return {"config_id": config_id, "status": "assigned", "target": new_target, "total_assignments": len(assignments)}
+    else:
+        return {"error": response.text, "status_code": response.status_code}
+
+@mcp.tool()
+def create_app_protection_policy_assignment(policy_id: str, platform: str, group_id: str = None, is_exclusion: bool = False):
+    """Assigns an app protection (MAM) policy to a group. platform is 'android', 'ios', or 'windowsInformationProtection'. Adds to existing assignments without removing them."""
+    access_token = get_access_token()
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    resource_map = {
+        "android": "androidManagedAppProtections",
+        "ios": "iosManagedAppProtections",
+        "windowsInformationProtection": "mdmWindowsInformationProtectionPolicies"
+    }
+    resource = resource_map.get(platform)
+    if not resource:
+        return {"error": f"Unsupported platform '{platform}'. Use 'android', 'ios', or 'windowsInformationProtection'."}
+
+    base_url = f"https://graph.microsoft.com/beta/deviceAppManagement/{resource}/{policy_id}"
+
+    existing = requests.get(f"{base_url}/assignments", headers=headers)
+    if existing.status_code != 200:
+        return {"error": existing.text, "status_code": existing.status_code}
+
+    try:
+        new_target = build_assignment_target(group_id=group_id, is_exclusion=is_exclusion)
+    except ValueError as e:
+        return {"error": str(e)}
+
+    assignments = [{"target": a["target"]} for a in existing.json().get("value", [])]
+    assignments.append({"target": new_target})
+
+    response = requests.post(f"{base_url}/assign", headers=headers, json={"assignments": assignments})
+
+    if response.status_code in (200, 204):
+        return {"policy_id": policy_id, "platform": platform, "status": "assigned", "target": new_target, "total_assignments": len(assignments)}
+    else:
+        return {"error": response.text, "status_code": response.status_code}
+
+@mcp.tool()
+def delete_intune_policy(policy_type: str, policy_id: str, script_type: str = "powershell", platform: str = None):
+    """Permanently deletes an Intune policy, profile, script, or app. policy_type is one of: 'compliance', 'configuration', 'settings_catalog', 'script', 'app', 'autopilot', 'enrollment_status_page', 'app_protection'. For 'script', set script_type to 'powershell' or 'shell'. For 'app_protection', set platform to 'android', 'ios', or 'windowsInformationProtection'."""
+    access_token = get_access_token()
+
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+
+    resource_map = {
+        "compliance": ("v1.0", "deviceManagement/deviceCompliancePolicies"),
+        "configuration": ("beta", "deviceManagement/deviceConfigurations"),
+        "settings_catalog": ("beta", "deviceManagement/configurationPolicies"),
+        "app": ("beta", "deviceAppManagement/mobileApps"),
+        "autopilot": ("beta", "deviceManagement/windowsAutopilotDeploymentProfiles"),
+        "enrollment_status_page": ("beta", "deviceManagement/deviceEnrollmentConfigurations")
+    }
+
+    if policy_type == "script":
+        resource = "deviceManagementScripts" if script_type == "powershell" else "deviceShellScripts"
+        version, path = "beta", f"deviceManagement/{resource}"
+    elif policy_type == "app_protection":
+        platform_map = {
+            "android": "androidManagedAppProtections",
+            "ios": "iosManagedAppProtections",
+            "windowsInformationProtection": "mdmWindowsInformationProtectionPolicies"
+        }
+        resource = platform_map.get(platform)
+        if not resource:
+            return {"error": f"Unsupported platform '{platform}'. Use 'android', 'ios', or 'windowsInformationProtection'."}
+        version, path = "beta", f"deviceAppManagement/{resource}"
+    elif policy_type in resource_map:
+        version, path = resource_map[policy_type]
+    else:
+        return {"error": f"Unsupported policy_type '{policy_type}'. Use 'compliance', 'configuration', 'settings_catalog', 'script', 'app', 'autopilot', 'enrollment_status_page', or 'app_protection'."}
+
+    response = requests.delete(f"https://graph.microsoft.com/{version}/{path}/{policy_id}", headers=headers)
+
+    if response.status_code in (200, 204):
+        return {"policy_id": policy_id, "policy_type": policy_type, "status": "deleted"}
     else:
         return {"error": response.text, "status_code": response.status_code}
 
