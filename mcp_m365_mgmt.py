@@ -70,6 +70,35 @@ def build_assignment_target(group_id=None, is_exclusion=False, all_devices=False
 
     return target
 
+def resolve_policy_endpoint(policy_type, script_type="powershell", platform=None):
+    """Resolves (version, path, assignment_wrapper_key) for a policy_type used across the assignment and delete tools. Returns an error dict instead if policy_type/platform is invalid."""
+    resource_map = {
+        "compliance": ("v1.0", "deviceManagement/deviceCompliancePolicies", "assignments"),
+        "configuration": ("beta", "deviceManagement/deviceConfigurations", "assignments"),
+        "settings_catalog": ("beta", "deviceManagement/configurationPolicies", "assignments"),
+        "app": ("beta", "deviceAppManagement/mobileApps", "mobileAppAssignments"),
+        "autopilot": ("beta", "deviceManagement/windowsAutopilotDeploymentProfiles", None),
+        "enrollment_status_page": ("beta", "deviceManagement/deviceEnrollmentConfigurations", "enrollmentConfigurationAssignments")
+    }
+
+    if policy_type == "script":
+        resource = "deviceManagementScripts" if script_type == "powershell" else "deviceShellScripts"
+        return ("beta", f"deviceManagement/{resource}", "deviceManagementScriptAssignments")
+    elif policy_type == "app_protection":
+        platform_map = {
+            "android": "androidManagedAppProtections",
+            "ios": "iosManagedAppProtections",
+            "windowsInformationProtection": "mdmWindowsInformationProtectionPolicies"
+        }
+        resource = platform_map.get(platform)
+        if not resource:
+            return {"error": f"Unsupported platform '{platform}'. Use 'android', 'ios', or 'windowsInformationProtection'."}
+        return ("beta", f"deviceAppManagement/{resource}", "assignments")
+    elif policy_type in resource_map:
+        return resource_map[policy_type]
+    else:
+        return {"error": f"Unsupported policy_type '{policy_type}'. Use 'compliance', 'configuration', 'settings_catalog', 'script', 'app', 'autopilot', 'enrollment_status_page', or 'app_protection'."}
+
 def get_access_token():
     """Get access token for Microsoft Graph API."""
     auth_mode = os.getenv("AUTH_MODE", "app")
@@ -1128,37 +1157,64 @@ def delete_intune_policy(policy_type: str, policy_id: str, script_type: str = "p
         "Authorization": f"Bearer {access_token}"
     }
 
-    resource_map = {
-        "compliance": ("v1.0", "deviceManagement/deviceCompliancePolicies"),
-        "configuration": ("beta", "deviceManagement/deviceConfigurations"),
-        "settings_catalog": ("beta", "deviceManagement/configurationPolicies"),
-        "app": ("beta", "deviceAppManagement/mobileApps"),
-        "autopilot": ("beta", "deviceManagement/windowsAutopilotDeploymentProfiles"),
-        "enrollment_status_page": ("beta", "deviceManagement/deviceEnrollmentConfigurations")
-    }
-
-    if policy_type == "script":
-        resource = "deviceManagementScripts" if script_type == "powershell" else "deviceShellScripts"
-        version, path = "beta", f"deviceManagement/{resource}"
-    elif policy_type == "app_protection":
-        platform_map = {
-            "android": "androidManagedAppProtections",
-            "ios": "iosManagedAppProtections",
-            "windowsInformationProtection": "mdmWindowsInformationProtectionPolicies"
-        }
-        resource = platform_map.get(platform)
-        if not resource:
-            return {"error": f"Unsupported platform '{platform}'. Use 'android', 'ios', or 'windowsInformationProtection'."}
-        version, path = "beta", f"deviceAppManagement/{resource}"
-    elif policy_type in resource_map:
-        version, path = resource_map[policy_type]
-    else:
-        return {"error": f"Unsupported policy_type '{policy_type}'. Use 'compliance', 'configuration', 'settings_catalog', 'script', 'app', 'autopilot', 'enrollment_status_page', or 'app_protection'."}
+    endpoint = resolve_policy_endpoint(policy_type, script_type, platform)
+    if isinstance(endpoint, dict):
+        return endpoint
+    version, path, _ = endpoint
 
     response = requests.delete(f"https://graph.microsoft.com/{version}/{path}/{policy_id}", headers=headers)
 
     if response.status_code in (200, 204):
         return {"policy_id": policy_id, "policy_type": policy_type, "status": "deleted"}
+    else:
+        return {"error": response.text, "status_code": response.status_code}
+
+@mcp.tool()
+def delete_policy_assignment(policy_type: str, policy_id: str, group_id: str = None, assignment_id: str = None, script_type: str = "powershell", platform: str = None):
+    """Removes a single assignment from an Intune policy, profile, script, or app without touching its other assignments. policy_type is one of: 'compliance', 'configuration', 'settings_catalog', 'script', 'app', 'enrollment_status_page', 'app_protection' (Autopilot profiles are not supported here; use create_autopilot_profile_assignment to replace that profile's single assignment instead). Identify the assignment to remove by group_id or assignment_id. For 'script', set script_type to 'powershell' or 'shell'. For 'app_protection', set platform to 'android', 'ios', or 'windowsInformationProtection'."""
+    if policy_type == "autopilot":
+        return {"error": "Autopilot deployment profiles only support a single direct assignment and cannot have it removed via this tool. Use create_autopilot_profile_assignment to replace it with a different target instead."}
+
+    if not group_id and not assignment_id:
+        return {"error": "Specify group_id or assignment_id to identify which assignment to remove."}
+
+    access_token = get_access_token()
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    endpoint = resolve_policy_endpoint(policy_type, script_type, platform)
+    if isinstance(endpoint, dict):
+        return endpoint
+    version, path, wrapper_key = endpoint
+
+    base_url = f"https://graph.microsoft.com/{version}/{path}/{policy_id}"
+
+    existing = requests.get(f"{base_url}/assignments", headers=headers)
+    if existing.status_code != 200:
+        return {"error": existing.text, "status_code": existing.status_code}
+
+    current = existing.json().get("value", [])
+
+    if assignment_id:
+        remaining = [a for a in current if a.get("id") != assignment_id]
+    else:
+        remaining = [a for a in current if a.get("target", {}).get("groupId") != group_id]
+
+    if len(remaining) == len(current):
+        return {"error": "No matching assignment found.", "policy_id": policy_id, "existing_assignment_count": len(current)}
+
+    if policy_type == "app":
+        assignments = [{"target": a["target"], "intent": a.get("intent", "required")} for a in remaining]
+    else:
+        assignments = [{"target": a["target"]} for a in remaining]
+
+    response = requests.post(f"{base_url}/assign", headers=headers, json={wrapper_key: assignments})
+
+    if response.status_code in (200, 204):
+        return {"policy_id": policy_id, "policy_type": policy_type, "status": "assignment_removed", "remaining_assignments": len(assignments)}
     else:
         return {"error": response.text, "status_code": response.status_code}
 
